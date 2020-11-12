@@ -102,7 +102,7 @@ func doxyHandler(gitDir string, deployments map[string]int) func(w http.Response
 		// Now a shell script to do all the things we need.
 		script := "set -e\n"
 
-		// First, change into the right directory:
+		// First, change into the root directory:
 		script += "cd " + gitDir + "\n"
 
 		// If we need to pull from origin, do that next.
@@ -113,9 +113,12 @@ func doxyHandler(gitDir string, deployments map[string]int) func(w http.Response
 		// Check out the requested branch
 		script += "git checkout " + doxyRequest.BranchName + "\n"
 
+		// Change into the requested subdirectory
+		script += "cd " + strings.TrimPrefix(doxyRequest.Subdirectory, "/") + "\n"
+
 		// Now build the image.
 		tag := "image" + strconv.Itoa(imageNumber)
-		script += "docker build -t " + tag + " -f " + doxyRequest.Dockerfile + " " + doxyRequest.Subdirectory + "\n"
+		script += "docker build -t " + tag + " -f " + doxyRequest.Dockerfile + " .\n"
 
 		// Now run it, mapping the speficied HTTP port out to an available high port.
 		hostPort := basePort + imageNumber
@@ -134,7 +137,13 @@ func doxyHandler(gitDir string, deployments map[string]int) func(w http.Response
 			fmt.Println(err)
 			fmt.Println(stdout.String())
 			fmt.Println(stderr.String())
-			http.Error(w, "Error running command.", 500)
+
+			responseBody := "Error running command: " + err.Error() + "\n"
+			responseBody += "shell command:\n" + script + "\n"
+			responseBody += "stdout:\n" + stdout.String() + "\n"
+			responseBody += "stderr:\n" + stderr.String()
+
+			http.Error(w, responseBody, 500)
 			return
 		}
 
@@ -146,7 +155,7 @@ func doxyHandler(gitDir string, deployments map[string]int) func(w http.Response
 		// Increment the image number for next time.
 		imageNumber++
 
-		w.Write([]byte("Doxy handler"))
+		w.Write([]byte("Deployed!"))
 		return
 	}
 }
