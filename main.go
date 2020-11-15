@@ -37,27 +37,22 @@ func main() {
 
 func rootHandler(deployments map[string]int) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		fragments := strings.SplitN(strings.TrimPrefix(path, "/"), "/", 2)
+		host := r.Host
+		subdomain := strings.TrimSuffix(host, ".telltale.xyz")
 
-		if len(fragments) == 0 {
+		if subdomain == "" || subdomain == "telltale.xyz" {
 			http.Error(w, "No deployment prefix found.", 400)
 			return
 		}
 
-		prefix := fragments[0]
-
-		if _, ok := deployments[prefix]; ok {
-			port := basePort + deployments[prefix]
+		if _, ok := deployments[subdomain]; ok {
+			port := basePort + deployments[subdomain]
 			url, _ := url.Parse("http://localhost:" + strconv.Itoa(port))
 			proxy := httputil.NewSingleHostReverseProxy(url)
-
-			// Remove the prefix from the URL
-			r.URL.Path = strings.TrimPrefix(path, "/"+prefix)
 			proxy.ServeHTTP(w, r)
 
 		} else {
-			http.Error(w, "Deployment "+prefix+" not found.", 400)
+			http.Error(w, "Deployment "+subdomain+" not found.", 400)
 		}
 
 		return
