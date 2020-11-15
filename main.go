@@ -100,13 +100,20 @@ func doxyHandler(gitDir string, deployments map[string]int) func(w http.Response
 		// First, change into the root directory:
 		script += "cd " + gitDir + "\n"
 
-		// If we need to pull from origin, do that next.
+		// If we need to fetch from origin, do that next.
 		if doxyRequest.PullOrigin {
-			script += "git pull\n"
+			script += "git fetch origin " + doxyRequest.BranchName + "\n"
+
 		}
 
 		// Check out the requested branch
 		script += "git checkout " + doxyRequest.BranchName + "\n"
+
+		// If we needed to fetch from origin, then we may also need to pull.
+		if doxyRequest.PullOrigin {
+			script += "git pull\n"
+
+		}
 
 		// Change into the requested subdirectory
 		script += "cd " + strings.TrimPrefix(doxyRequest.Subdirectory, "/") + "\n"
