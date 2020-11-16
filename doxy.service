@@ -1,0 +1,14 @@
+[Unit]
+Description=Doxy
+After=network.target
+After=syslog.target
+
+[Service]
+ExecStart=/usr/local/bin/doxy --directory /home/ben/Code/fabric
+User=ben
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+Alias=doxy.service
+

@@ -15,6 +15,7 @@ import (
 )
 
 const basePort = 8080
+const domain = "fabric-dev.xyz"
 
 func main() {
 	var gitDir string
@@ -38,9 +39,9 @@ func main() {
 func rootHandler(deployments map[string]int) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
-		subdomain := strings.TrimSuffix(host, ".telltale.xyz")
+		subdomain := strings.TrimSuffix(host, "." + domain)
 
-		if subdomain == "" || subdomain == "telltale.xyz" {
+		if subdomain == "" || subdomain == domain {
 			http.Error(w, "No deployment prefix found.", 400)
 			return
 		}
